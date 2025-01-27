@@ -2,13 +2,17 @@
   "name": "lsw-store",
   "version": "1.0.0",
   "description": "Store tool for Lite Starter Webkit.",
-  "main": "index.js",
+  "main": "dist/store.unbundled.js",
   "scripts": {
-    "build": "echo 'no building for @allnulled/lsw-store'",
+    "build": "node src/build.js",
     "versionate": "echo 'no versionate for @allnulled/lsw-store'",
-    "test": "echo 'no test for @allnulled/lsw-store'"
+    "test": "node test/test.js"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC"
+  "keywords": [
+    "state",
+    "manager",
+    "store"
+  ],
+  "author": "allnulled",
+  "license": "WTFPL"
 }
