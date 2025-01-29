@@ -25,7 +25,7 @@ const Store = class {
 
   constructor(initialState = {}, path_to_store = "original_store.json") {
     this.$store = initialState;
-    this.$ufs = UFS_manager.create(path_to_store);
+    this.$storePath = path_to_store;
     this.events = {};
   }
 
@@ -48,7 +48,7 @@ const Store = class {
     }
   }
 
-  get(path) {
+  get(path = []) {
     return path.reduce((acc, key) => (acc && acc[key] !== undefined ? acc[key] : undefined), this.$store);
   }
 
@@ -165,20 +165,58 @@ const Store = class {
     }
   }
 
+  multiextend(...extensions) {
+    for(let index=0; index<extensions.length; index++) {
+      const {
+        selector,
+        value: targetValue,
+        mode,
+        modifier
+      } = extensions[index];
+      this.modify(selector, currentValue => {
+        let lastValue = currentValue;
+        Set_value: {
+          if(mode === "assign") {
+            lastValue = Object.assign(currentValue, targetValue);
+          } else if(mode === "default") {
+            lastValue = Object.assign({}, targetValue, currentValue);
+          } else if(mode === "set") {
+            lastValue = targetValue;
+          } else if(mode === "concat") {
+            lastValue = currentValue.concat(targetValue);
+          }
+        }
+        Run_modifier: {
+          if(modifier) {
+            const result = modifier(lastValue);
+            if(typeof result !== "undefined") {
+              return result;
+            }
+          }
+          return lastValue;
+        }
+      });
+    }
+  }
+
   modify(path, modifier) {
     const currentValue = this.get(path);
     const newValue = modifier(currentValue);
-    if (newValue !== currentValue) {
+    const isNotSame = newValue !== currentValue;
+    const isNotUndefined = typeof newValue !== "undefined";
+    if (isNotUndefined && isNotSame) {
       this.set(path, newValue);
     }
   }
 
   hydrate(file) {
-    this.$store = JSON.parse(this.$ufs.read_file(file));
+    const ufs = UFS_manager.create(this.$storePath);
+    this.$store = JSON.parse(ufs.read_file(file));
   }
 
   dehydrate(file) {
-    this.$ufs.write_file(file, JSON.stringify(this.$store));
+    const ufs = UFS_manager.create(this.$storePath);
+    ufs.write_file(file, JSON.stringify(this.$store));
   }
 
 };
